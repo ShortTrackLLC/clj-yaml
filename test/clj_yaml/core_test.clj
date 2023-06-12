@@ -416,25 +416,6 @@ sequence: !CustomSequence
 
 (def dangerous-yaml "!!javax.script.ScriptEngineManager [!!java.net.URLClassLoader [[!!java.net.URL [\"very-bad-badness-here\"]]]]")
 
-(deftest unsafe-deny-test
-  (is (thrown-with-msg? YAMLException #"(?m).*could not.*constructor.*ScriptEngineManager"
-                        (parse-string dangerous-yaml))
-      "by default, SnakeYaml stops creation of classes - malicious example")
-  (is (thrown-with-msg? YAMLException #"(?m).*could not.*constructor.*java\.lang\.Long"
-                        (parse-string "!!java.lang.Long 5"))
-      "by default, SnakeYaml stops creation of classes - innocuous looking class example"))
-
-(deftest unsafe-allow-test
-  ;; be very wary of permitting unsafe class construction!
-  (let [exm (try (parse-string dangerous-yaml :unsafe true)
-                 (catch Throwable e
-                   (Throwable->map e)))]
-    (is (= (:cause exm) "no protocol: very-bad-badness-here")
-        "SnakeYAML can be asked to create unsafe classes (it tried to create that nested URL) - malicious example"))
-  (let [parsed (parse-string "!!java.lang.Long 5" :unsafe true)]
-    (is (= 5 parsed) "SnakeYAML can be asked to create innocuous looking classes - value match")
-    (is (= "class java.lang.Long" (str (class parsed))) "SnakeYAML can be asked to create innocuous looking classes - type match")))
-
 (deftest low-level-decode-legacy-compat-test
   ;; Dear reader, we don't want to encourage you to use low level functions in any way,
   ;; this test is here to verify that we are compatible with existing code in the wild

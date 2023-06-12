@@ -107,15 +107,13 @@
   Returns internal SnakeYAML encoder/decoder.
 
   See [[parse-string]] and [[generate-string]] for description of options."
-  ^Yaml [& {:keys [unknown-tag-fn dumper-options unsafe mark max-aliases-for-collections allow-recursive-keys allow-duplicate-keys nesting-depth-limit]}]
+  ^Yaml [& {:keys [unknown-tag-fn dumper-options mark max-aliases-for-collections allow-recursive-keys allow-duplicate-keys nesting-depth-limit]}]
   (let [loader (make-loader-options :max-aliases-for-collections max-aliases-for-collections
                                     :allow-recursive-keys allow-recursive-keys
                                     :allow-duplicate-keys allow-duplicate-keys
                                     :nesting-depth-limit nesting-depth-limit)
         ^BaseConstructor constructor
         (cond
-          unsafe (Constructor. loader)
-
           ;; construct2ndStep isn't implemented by MarkedConstructor,
           ;; causing an exception to be thrown before loader options
           ;; are used
@@ -123,7 +121,6 @@
 
           unknown-tag-fn (UnknownTagsConstructor.)
 
-          ;; TODO: unsafe marked constructor
           :else (SafeConstructor. loader))
 
         dumper-opts (make-dumper-options dumper-options)]
@@ -294,14 +291,9 @@
     - Default: `false`
   - `:allow-duplicate-keys` - when `false` throws on duplicate keys.
     - Default: `true` - last duplicate key wins.
-  - `:unsafe` - when `true` attempt to load tagged elements to Java objects, else prohibits via throw.
-    - default: `false`
-    - **WARNING**: be very wary of parsing unsafe YAML. See [docs](/doc/01-user-guide.adoc#unsafe)
   - `:mark` - when `true` position of YAML input is tracked and returned in alternate structure.
     - default: `false`
-    - see [docs](/doc/01-user-guide.adoc#mark)
-
-  Note: clj-yaml will only recognize the first of `:unsafe`, `:mark` or `:unknown-tag-fn`"
+    - see [docs](/doc/01-user-guide.adoc#mark)"
   [^String yaml-string & opts]
   (let [{:as opts-map} opts]
     (load-stream (apply make-yaml opts)
